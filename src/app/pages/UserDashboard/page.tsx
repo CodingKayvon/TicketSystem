@@ -1,9 +1,15 @@
 'use client'
 
+import { db } from '@/app/util/firebase-client';
+import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { Ticket } from 'lucide-react'
+import { getAuth } from 'firebase/auth';
 import React, { useState } from 'react'
 
 const UserDashboard = () => {
+  const auth = getAuth();
+  const user = auth.currentUser;
+
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high' | null>(null);
@@ -32,16 +38,33 @@ const UserDashboard = () => {
       hoverClass: 'hover:border-red-500/60 hover:text-red-400',
     },
   };
-
-  const handleSubmit = () => {
+  
+  //Submit Ticket -> Store in Firebase
+  const handleSubmit = async () => {
     if(!subject || !description || !priority) return
-    setSubmitted(true);
-    setTimeout(() => {
-      setSubmitted(false);
-      setSubject('');
-      setDescription('');
-      setPriority(null);
-    }, 3000)
+
+    try {
+      await addDoc(collection(db, 'tickets'), {
+        subject: subject.trim(),
+        description: description.trim(),
+        priority,
+        status: 'open',
+        userId: user?.uid || null,
+        userEmail: user?.email || null,
+        userName: user?.displayName || 'Anonymous',
+        createdAt: serverTimestamp(),
+      });
+
+      setSubmitted(true);
+      setTimeout(() => {
+       setSubmitted(false);
+       setSubject('');
+       setDescription('');
+       setPriority(null);
+     }, 3000)
+    } catch (error) {
+      console.error("ERROR ADDING TICKET: ", error);
+    }
   };
 
   const isReady = subject.trim() && description.trim() && priority;
