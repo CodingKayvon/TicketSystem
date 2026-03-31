@@ -59,8 +59,8 @@ const Registration = () => {
         createdAt: new Date(),
       });
 
-      // Redirect to login or dashboard
-      router.push('/pages/tickets');
+      // Redirect to Role Selection
+      router.push('/pages/RoleSelection');
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Failed to create account');
