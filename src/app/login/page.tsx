@@ -26,7 +26,7 @@ const Login = () => {
     try {
       setLoading(true);
       await signInWithEmailAndPassword(auth, email, password);
-      router.push('/pages/tickets');
+      router.push('/pages/RoleSelection');
     } catch (err: any) {
       console.error(err);
       setError('Invalid email or password');
