@@ -4,7 +4,7 @@ import React from 'react'
 import { TicketCheck } from 'lucide-react';
 import { TicketPlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import RoleCard from '@/app/components/Card/page';
+import RoleCard from '@/app/components/RoleCard/page';
 
 
 const RoleSelection = () => {
