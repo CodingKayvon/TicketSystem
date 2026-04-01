@@ -72,7 +72,7 @@ const UserDashboard = () => {
   return (
     <div className='min-h-screen flex flex-col bg-linear-to-br from-slate-950 to-slate-800/50 justify-center items-center'>
       {/* Ticket Form */}
-      <div className='flex flex-col w-132 bg-gray-600 rounded-xl border border-slate-900'>
+      <div className='flex flex-col w-132 bg-gray-600 rounded-xl border border-slate-400'>
 
         {/* Header */}
         <div className='px-8 pt-8 pb-6 border-b border-gray-700/50'>
