@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 
 // Icons
 import { TicketIcon } from 'lucide-react'
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, db } from '../util/firebase-client';
 import { doc, setDoc } from 'firebase/firestore';
 
@@ -51,6 +51,11 @@ const Registration = () => {
       // Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+
+      //Set Display Name
+      await updateProfile(user, {
+        displayName: fullName,
+      });
 
       // Store additional info in Firestore
       await setDoc(doc(db, 'users', user.uid), {

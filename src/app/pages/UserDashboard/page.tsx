@@ -70,7 +70,7 @@ const UserDashboard = () => {
   const isReady = subject.trim() && description.trim() && priority;
 
   return (
-    <div className='min-h-screen flex flex-col bg-linear-to-br from-gray-800 to-gray-700 justify-center items-center'>
+    <div className='min-h-screen flex flex-col bg-linear-to-br from-slate-950 to-slate-800/50 justify-center items-center'>
       {/* Ticket Form */}
       <div className='flex flex-col w-132 bg-gray-600 rounded-xl border border-slate-900'>
 
