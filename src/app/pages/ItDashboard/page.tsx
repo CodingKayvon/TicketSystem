@@ -1,7 +1,7 @@
 'use client'
 
 import StatGrid from '@/app/components/StatGrid/page';
-import { db } from '@/app/util/firebase-client';
+import { auth, db } from '@/app/util/firebase-client';
 import { collection, doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { Columns3Cog  } from 'lucide-react';
 import React, { useEffect, useState } from 'react'
@@ -20,6 +20,9 @@ interface Ticket {
   userEmail: string | null,
   userName: string,
   createdAt: { seconds: number } | null,
+
+  assignedToId: string | null,
+  assignedToName: string | null,
 };
 
 const ITDashboard = () => {
@@ -165,6 +168,25 @@ const ITDashboard = () => {
     }
   };
 
+  //Assign Tickets
+  const assignToMe = async (ticket: Ticket) => {
+    const user = auth.currentUser;
+    if(!user) return;
+
+    //Prevent Reassigning if already taken
+    if(ticket.assignedToId) return
+
+    try {
+      await updateDoc(doc(db, 'tickets', ticket.id), {
+        assignedToId: user.uid,
+        assignedToName: user.displayName || 'IT Member',
+        status: 'in-progress',
+      });
+    } catch (err) {
+      console.error("ERROR ASSIGNING: ", err);
+    };
+  };
+
   return (
     <div className='min-h-screen bg-linear-to-br from-slate-950 to-slate-800/50 p-8'>
 
@@ -245,6 +267,7 @@ const ITDashboard = () => {
       ) : (
         <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4'>
           {sortedTickets.map(ticket => {
+            const isAssignedToMe = ticket.assignedToId === auth.currentUser?.uid;
             const pConf = priorityConfig[ticket.priority];
             const sConf = statusConfig[ticket.status];
 
@@ -281,35 +304,69 @@ const ITDashboard = () => {
                       {ticket.priority}
                   </span>
 
-                  <div className='flex items-end gap-2'>
-                    <div className='flex items-center text-[9px]'>
-                      {initials(ticket.userName)}
+                  <div className='flex flex-col items-end gap-1 text-[10px] text-gray-300'>
+                    {/* Created By */}
+                    <div>
+                      By: {ticket.userName}
                     </div>
 
-                    <div className='flex text-[12px]'>
-                      -
-                    </div> 
+                    {/* Assigned To */}
+                    {ticket.assignedToName && (
+                      <div>
+                        Assigned: {ticket.assignedToName || 'Unassigned'}
+                      </div>
+                    )}
 
+                    {/* Time */}
                     {ticket.createdAt && (
                       <span className='text-[10px] text-white/70'>
-                        {timeAgo(ticket.createdAt.seconds)}
+                        Created {timeAgo(ticket.createdAt.seconds)}
                       </span>
                     )}
+
                   </div>
                 </div>
 
                 {/* Actions */}
                 <div className='px-5 pb-4 flex gap-2'>
+                  {/* Assign / Take Ticket */}
+                  {!ticket.assignedToId ? (
+                    <button
+                      onClick={() => assignToMe(ticket)}
+                      className='flex-1 py-1.5 bg-blue-500/20 text-xs text-blue-300 rounded-lg cursor-pointer'
+                    >
+                      Take Ticket
+                    </button>
+                  ) : (
+                    <button
+                      disabled
+                      className='flex-1 py-1.5 bg-gray-500/20 text-xs text-gray-400 rounded-lg cursor-not-allowed'
+                    >
+                      Assigned
+                    </button>
+                  )}
+
+                  {/* Existing Actions */}
                   <button
                     onClick={() => cycleStatus(ticket)}
-                    className='flex-1 py-1.5 bg-black/20 text-xs text-gray-400 rounded-lg cursor-pointer'
+                    disabled={!isAssignedToMe}
+                    className={`flex-1 py-1.5 text-xs rounded-lg
+                      ${isAssignedToMe
+                        ? 'bg-black/20 text-gray-400 cursor-pointer'
+                        : 'bg-gray-500/20 text-gray-500 cursor-not-allowed'
+                      }`}
                   >
                     Change Status
                   </button>
 
                   <button
                     onClick={() => markResolved(ticket)}
-                    className='flex-1 py-1.5 bg-emerald-500/20 text-xs text-emerald-300 rounded-lg cursor-pointer'
+                    disabled={!isAssignedToMe}
+                    className={`flex-1 py-1.5 text-xs rounded-lg
+                      ${isAssignedToMe
+                        ? 'bg-emerald-500/20 text-emerald-300 cursor-pointer'
+                        : 'bg-gray-500/20 text-gray-500 cursor-not-allowed'
+                      }`}
                   >
                     Resolve
                   </button>

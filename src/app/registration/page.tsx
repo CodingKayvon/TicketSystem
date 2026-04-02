@@ -150,7 +150,7 @@ const Registration = () => {
             <input
               type='password'
               name='password'
-              placeholder='Min. 8 characters'
+              placeholder='Min. 6 characters'
               value={formData.password}
               onChange={handleChange}
               className='w-full px-4 py-3 rounded-md bg-[#080e1a] border border-[#1a2640] text-gray-400 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500'
