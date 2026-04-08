@@ -26,7 +26,7 @@ interface Ticket {
   assignedToName: string | null,
 };
 
-const ITDashboard = async () => {
+const ITDashboard = () => {
   const router = useRouter();
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
