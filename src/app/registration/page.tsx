@@ -52,16 +52,17 @@ const Registration = () => {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
+      //Store User Information - Firebase
+      await setDoc(doc(db, 'users', user.uid), {
+        name: user.displayName || fullName || 'Anonymous',
+        email: user.email,
+        role: 'user',
+        createdAt: new Date(),
+      });
+
       //Set Display Name
       await updateProfile(user, {
         displayName: fullName,
-      });
-
-      // Store additional info in Firestore
-      await setDoc(doc(db, 'users', user.uid), {
-        fullName,
-        email,
-        createdAt: new Date(),
       });
 
       // Redirect to Role Selection

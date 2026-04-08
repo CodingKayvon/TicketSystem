@@ -2,8 +2,9 @@
 
 import StatGrid from '@/app/components/StatGrid/page';
 import { auth, db } from '@/app/util/firebase-client';
-import { collection, doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { Columns3Cog  } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react'
 
 type Priority = 'low' | 'medium' | 'high';
@@ -25,7 +26,9 @@ interface Ticket {
   assignedToName: string | null,
 };
 
-const ITDashboard = () => {
+const ITDashboard = async () => {
+  const router = useRouter();
+
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,6 +36,37 @@ const ITDashboard = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | Status>('all');
   const [priorityFilter, setPriorityFilter] = useState<'all' | Priority>('all');
   const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    const checkAccess = async () => {
+      const user = auth.currentUser;
+
+      if(!user) {
+        router.push('/login'); 
+        return;
+      }
+
+      try {
+        const snap = await getDoc(doc(db, 'users', user.uid));
+
+        if(!snap.exists()) {
+          router.push('/login');
+          return;
+        }
+
+        const role = snap.data().role;
+
+        if(role != 'it'){
+          router.push('/pages/UserDashboard');
+        }
+
+      } catch (err) {
+        console.error("ACCESS CHECK FAIL ", err);
+      }
+     };
+
+     checkAccess();
+  }, []);
 
   //Retrieve Ticket Data from Firestore
   useEffect(() => {
