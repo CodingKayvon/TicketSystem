@@ -22,6 +22,40 @@ const UserDashboard = () => {
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
 
+  const statusConfig = {
+    open: {
+      label: 'Open',
+      class: 'bg-blue-500/20 text-blue-300',
+    },
+    'in-progress': {
+      label: 'In Progress',
+      class: 'bg-amber-500/20 text-amber-300',
+    },
+    resolved: {
+      label: 'Resolved',
+      class: 'bg-emerald-500/20 text-emerald-300',
+    },
+    closed: {
+      label: 'Closed',
+      class: 'bg-gray-500/20 text-gray-300',
+    },
+  };
+
+  const priorityConfigCard = {
+    low: {
+      text: 'text-emerald-300',
+      dot: 'bg-emerald-400',
+    },
+    medium: {
+      text: 'text-amber-300',
+      dot: 'bg-amber-400',
+    },
+    high: {
+      text: 'text-red-300',
+      dot: 'bg-red-400',
+    },
+  };
+
   const priorityConfig = {
     low: {
       label: 'Low',
@@ -119,6 +153,12 @@ const UserDashboard = () => {
       console.error("ERROR ADDING TICKET: ", error);
     }
   };
+
+  const unresolvedTickets = tickets.filter(
+    ticket => 
+      ticket.status !== 'resolved' &&
+      ticket.status !== 'closed'
+  );
 
   const isReady = subject.trim() && description.trim() && priority;
 
@@ -234,56 +274,74 @@ const UserDashboard = () => {
 
       {/* User Tickets */}
       <div className="flex flex-col w-132 lg:max-h-[72vh] overflow-y-auto lg:absolute lg:right-40 pl-2 pr-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
-        <h2 className="text-white text-lg font-semibold lg:mb-4 mt-8 mb-6">Your Tickets</h2>
 
-        {tickets.length === 0 ? (
+        <div className='flex items-center text-white text-lg font-semibold mt-8 mb-6'>
+          <h2 className="pr-2">Your Tickets -</h2>
+          {unresolvedTickets.length}
+        </div>
+      {tickets.length === 0 ? (
           <p className="text-gray-400 text-sm">No tickets submitted yet.</p>
         ) : (
           <div className="flex flex-col gap-3">
-            {tickets.map(ticket => (
-              <div
-                key={ticket.id}
-                className="bg-gray-700 border border-gray-600 rounded-xl p-4"
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <p className="text-white text-sm">
-                    <span className='text-gray-400 font-semibold'>Subject: </span>
-                    {ticket.subject}
-                  </p>
-                  <span className="text-xs px-2 py-1 rounded bg-white/10 capitalize">
-                    <span className='text-gray-300'>Status: </span>
-                    {ticket.status}
-                  </span>
-                </div>
 
-                <div className='flex justify-between text-[11px] text-gray-400 mt-6 mb-2'>
-                  <p className="flex-1 text-xs font-bold text-gray-400 line-clamp-2">
-                    Description:  <br />
+            {tickets.map(ticket => {
+              const sConf = statusConfig[ticket.status];
+              const pConf = priorityConfigCard[ticket.priority];
+
+              return (
+                <div
+                  key={ticket.id}
+                  className="bg-gray-700 border border-gray-600 rounded-xl p-4"
+                >
+
+                  {/* Header */}
+                  <div className="flex justify-between items-center mb-2 capitalize">
+                    <p className="text-white text-sm">
+                      <span className='text-gray-400 font-semibold'>Subject: </span>
+                      {ticket.subject}
+                    </p>
+
+                    <span className={`text-xs px-2.5 py-1 rounded-md ${sConf?.class}`}>
+                      {sConf?.label}
+                    </span>
+                  </div>
+
+                  {/* Description */}
+                  <p className="text-gray-400 text-xs mt-2 capitalize">
+                    <span className='font-bold'>Desciption: </span>
+                    <br />
                     {ticket.description}
                   </p>
 
-                  <div className='flex flex-col text-xs text-gray-400'>
-                    <span className="capitalize">
-                      Priority: {ticket.priority}
-                    </span>
+                  {/* Footer */}
+                  <div className="flex justify-end mt-3 text-xs text-gray-400">
 
-                    {/* Assigned To */}
-                    {ticket.assignedToName && (
-                      <span className='capitalize'>
-                        Assigned to: {ticket.assignedToName}
-                      </span>
-                    )}
+                    <div className="grid grid-cols-[90px_1fr] gap-y-1">
 
-                    {/* Created Time */}
-                    {ticket.createdAt && (
-                      <span className=''>
-                        Created: {timeAgo(ticket.createdAt.seconds)}
+                      {/* Priority */}
+                      <span className="text-right pr-2">Priority:</span>
+                      <span className={`text-left capitalize ${pConf.text}`}>
+                        {ticket.priority}
                       </span>
-                    )}
+
+                      {/* Assigned To */}
+                      <span className="text-right pr-2">Assigned:</span>
+                      <span className="text-left capitalize">
+                        {ticket.assignedToName || 'Unassigned'}
+                      </span>
+
+                      {/* Created */}
+                      <span className="text-right pr-2">Created:</span>
+                      <span className="text-left">
+                        {ticket.createdAt ? timeAgo(ticket.createdAt.seconds) : '—'}
+                      </span>
+
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
+
           </div>
         )}
       </div>
