@@ -1,19 +1,26 @@
 'use client'
 
 import { db } from '@/app/util/firebase-client';
-import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
-import { Ticket } from 'lucide-react'
+import { addDoc, collection, onSnapshot, orderBy, query, serverTimestamp, where } from 'firebase/firestore';
+import { Ticket as TicketIcon } from 'lucide-react'
 import { getAuth } from 'firebase/auth';
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
+import { Ticket } from '@/app/types/Ticket';
+import { Priority } from '@/app/types/Ticket';
+import { Status } from '@/app/types/Ticket';
 
 const UserDashboard = () => {
   const auth = getAuth();
-  const user = auth.currentUser;
+
+  const [user, setUser] = useState<any>(null);
+  const [authLoading, setAuthLoading] = useState(true);
 
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high' | null>(null);
   const [submitted, setSubmitted] = useState(false);
+
+  const [tickets, setTickets] = useState<Ticket[]>([]);
 
   const priorityConfig = {
     low: {
@@ -38,6 +45,52 @@ const UserDashboard = () => {
       hoverClass: 'hover:border-red-500/60 hover:text-red-400',
     },
   };
+
+  const timeAgo = (seconds: number) => {
+    const now = Date.now();
+    const diff = now - seconds * 1000;
+
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (days > 0) return `${days}d ago`;
+    if (hours > 0) return `${hours}h ago`;
+    if (minutes > 0) return `${minutes}m ago`;
+
+    return 'Just now';
+  };
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((u) => {
+      setUser(u);
+      setAuthLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  //Fetch Current Users Tickets
+  useEffect(() => {
+    if(!user) return
+
+    const q = query(
+      collection(db, 'tickets'),
+      where('userId', '==', user.uid),
+      orderBy('createdAt', 'desc')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Ticket[];
+
+      setTickets(data);
+    })
+
+    return () => unsubscribe();
+  }, [user]);
   
   //Submit Ticket -> Store in Firebase
   const handleSubmit = async () => {
@@ -71,13 +124,14 @@ const UserDashboard = () => {
 
   return (
     <div className='min-h-screen flex flex-col bg-linear-to-br from-slate-950 to-slate-800/50 justify-center items-center'>
+      
       {/* Ticket Form */}
-      <div className='flex flex-col w-132 bg-gray-600 rounded-xl border border-slate-400'>
+      <div className='flex flex-col w-132 bg-gray-600 rounded-xl border border-slate-400 lg:mt-0 mt-20'>
 
         {/* Header */}
         <div className='px-8 pt-8 pb-6 border-b border-gray-700/50'>
           <div className='flex items-center gap-3 mb-1'>
-            <Ticket className='text-gray-800'/>
+            <TicketIcon className='text-gray-800'/>
             <span className='text-sm font-semibold tracking-widest text-gray-800 uppercase'>Support Portal</span>
           </div>
 
@@ -176,6 +230,62 @@ const UserDashboard = () => {
           </div>
 
         </div>
+      </div>
+
+      {/* User Tickets */}
+      <div className="flex flex-col w-132 lg:max-h-[72vh] overflow-y-auto lg:absolute lg:right-40 pl-2 pr-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
+        <h2 className="text-white text-lg font-semibold lg:mb-4 mt-8 mb-6">Your Tickets</h2>
+
+        {tickets.length === 0 ? (
+          <p className="text-gray-400 text-sm">No tickets submitted yet.</p>
+        ) : (
+          <div className="flex flex-col gap-3">
+            {tickets.map(ticket => (
+              <div
+                key={ticket.id}
+                className="bg-gray-700 border border-gray-600 rounded-xl p-4"
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-white text-sm">
+                    <span className='text-gray-400 font-semibold'>Subject: </span>
+                    {ticket.subject}
+                  </p>
+                  <span className="text-xs px-2 py-1 rounded bg-white/10 capitalize">
+                    <span className='text-gray-300'>Status: </span>
+                    {ticket.status}
+                  </span>
+                </div>
+
+                <div className='flex justify-between text-[11px] text-gray-400 mt-6 mb-2'>
+                  <p className="flex-1 text-xs font-bold text-gray-400 line-clamp-2">
+                    Description:  <br />
+                    {ticket.description}
+                  </p>
+
+                  <div className='flex flex-col text-xs text-gray-400'>
+                    <span className="capitalize">
+                      Priority: {ticket.priority}
+                    </span>
+
+                    {/* Assigned To */}
+                    {ticket.assignedToName && (
+                      <span className='capitalize'>
+                        Assigned to: {ticket.assignedToName}
+                      </span>
+                    )}
+
+                    {/* Created Time */}
+                    {ticket.createdAt && (
+                      <span className=''>
+                        Created: {timeAgo(ticket.createdAt.seconds)}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

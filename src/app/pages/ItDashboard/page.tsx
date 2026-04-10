@@ -1,30 +1,14 @@
 'use client'
 
+import React, { useEffect, useState } from 'react'
 import StatGrid from '@/app/components/StatGrid/page';
 import { auth, db } from '@/app/util/firebase-client';
 import { collection, doc, getDoc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { Columns3Cog  } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import React, { useEffect, useState } from 'react'
-
-type Priority = 'low' | 'medium' | 'high';
-type Status = 'open' | 'in-progress' | 'resolved' | 'closed';
-
-//Ticket Typeguard 
-interface Ticket {
-  id: string,
-  subject: string,
-  description: string,
-  priority: Priority,
-  status: Status,
-  userId: string | null,
-  userEmail: string | null,
-  userName: string,
-  createdAt: { seconds: number } | null,
-
-  assignedToId: string | null,
-  assignedToName: string | null,
-};
+import { Ticket } from '@/app/types/Ticket';
+import { Priority } from '@/app/types/Ticket';
+import { Status } from '@/app/types/Ticket';
 
 const ITDashboard = () => {
   const router = useRouter();
