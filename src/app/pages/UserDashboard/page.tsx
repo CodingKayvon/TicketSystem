@@ -8,6 +8,7 @@ import React, { useEffect, useState } from 'react'
 import { Ticket } from '@/app/types/Ticket';
 import { Priority } from '@/app/types/Ticket';
 import { Status } from '@/app/types/Ticket';
+import CommentModal from '@/app/components/CommentModal/page';
 
 const UserDashboard = () => {
   const auth = getAuth();
@@ -21,6 +22,10 @@ const UserDashboard = () => {
   const [submitted, setSubmitted] = useState(false);
 
   const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'in-progress' | 'resolved' | 'closed'>('all')
+
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [commentOpen, setCommentOpen] = useState(false);
 
   const statusConfig = {
     open: {
@@ -154,6 +159,16 @@ const UserDashboard = () => {
     }
   };
 
+  const filteredTickets = tickets.filter(ticket => {
+    const matchStatus =
+      statusFilter === 'all' || ticket.status === statusFilter;
+
+    return matchStatus;
+  });
+
+  const visibleTickets = filteredTickets;
+
+
   const unresolvedTickets = tickets.filter(
     ticket => 
       ticket.status !== 'resolved' &&
@@ -275,16 +290,40 @@ const UserDashboard = () => {
       {/* User Tickets */}
       <div className="flex flex-col w-132 lg:max-h-[72vh] overflow-y-auto lg:absolute lg:right-40 pl-2 pr-2 scrollbar-thin scrollbar-thumb-gray-600 scrollbar-track-transparent">
 
-        <div className='flex items-center text-white text-lg font-semibold mt-8 mb-6'>
-          <h2 className="pr-2">Your Tickets -</h2>
-          {unresolvedTickets.length}
+        <div className="flex flex-col gap-3 mt-8 mb-6">
+          {/* Title row */}
+          <div className="flex items-center text-white text-lg font-semibold">
+            <h2 className="pr-2">Your Tickets -</h2>
+            {visibleTickets.length}
+          </div>
+
+          {/* Filter buttons */}
+          <div className="flex flex-wrap gap-2">
+
+            {(['all', 'open', 'in-progress', 'resolved', 'closed'] as const).map(status => (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold capitalize transition-all duration-200 cursor-pointer
+                  ${
+                    statusFilter === status
+                      ? 'bg-slate-500/30 text-white border border-slate-400'
+                      : 'bg-gray-800/40 text-gray-400 border border-gray-700 hover:text-white hover:border-gray-500'
+                  }
+                `}
+              >
+                {status === 'all' ? 'All' : status}
+              </button>
+            ))}
+
+          </div>
         </div>
       {tickets.length === 0 ? (
           <p className="text-gray-400 text-sm">No tickets submitted yet.</p>
         ) : (
           <div className="flex flex-col gap-3">
 
-            {tickets.map(ticket => {
+            {visibleTickets.map(ticket => {
               const sConf = statusConfig[ticket.status];
               const pConf = priorityConfigCard[ticket.priority];
 
@@ -314,37 +353,58 @@ const UserDashboard = () => {
                   </p>
 
                   {/* Footer */}
-                  <div className="flex justify-end mt-3 text-xs text-gray-400">
+                  <div className="flex justify-between mt-3 text-xs text-gray-400">
 
-                    <div className="grid grid-cols-[90px_1fr] gap-y-1">
+                    <div className='flex items-end'>
+                      <button
+                        onClick={() => {
+                          setSelectedTicketId(ticket.id);
+                          setCommentOpen(true);
+                        }}
+                        className='mt-3 text-xs text-blue-300 cursor-pointer'
+                      >
+                        View Comments
+                      </button>
+                    </div>
 
-                      {/* Priority */}
-                      <span className="text-right pr-2">Priority:</span>
-                      <span className={`text-left capitalize ${pConf.text}`}>
-                        {ticket.priority}
-                      </span>
 
-                      {/* Assigned To */}
-                      <span className="text-right pr-2">Assigned:</span>
-                      <span className="text-left capitalize">
-                        {ticket.assignedToName || 'Unassigned'}
-                      </span>
+                    <div className='flex'>
+                      <div className="grid grid-cols-[90px_1fr] gap-y-1">
 
-                      {/* Created */}
-                      <span className="text-right pr-2">Created:</span>
-                      <span className="text-left">
-                        {ticket.createdAt ? timeAgo(ticket.createdAt.seconds) : '—'}
-                      </span>
+                        {/* Priority */}
+                        <span className="text-right pr-2">Priority:</span>
+                        <span className={`text-left capitalize ${pConf.text}`}>
+                          {ticket.priority}
+                        </span>
 
+                        {/* Assigned To */}
+                        <span className="text-right pr-2">Assigned:</span>
+                        <span className="text-left capitalize">
+                          {ticket.assignedToName || 'Unassigned'}
+                        </span>
+
+                        {/* Created */}
+                        <span className="text-right pr-2">Created:</span>
+                        <span className="text-left">
+                          {ticket.createdAt ? timeAgo(ticket.createdAt.seconds) : '—'}
+                        </span>
+
+                      </div>
                     </div>
                   </div>
                 </div>
               );
             })}
-
           </div>
-        )}
+
+)}
       </div>
+      <CommentModal 
+        ticketId={selectedTicketId || ''}
+        isOpen={commentOpen}
+        onClose={() => setCommentOpen(false)}
+        role="user"
+      />
     </div>
   )
 }

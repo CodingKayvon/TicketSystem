@@ -9,6 +9,7 @@ import { useRouter } from 'next/navigation';
 import { Ticket } from '@/app/types/Ticket';
 import { Priority } from '@/app/types/Ticket';
 import { Status } from '@/app/types/Ticket';
+import CommentModal from '@/app/components/CommentModal/page';
 
 const ITDashboard = () => {
   const router = useRouter();
@@ -20,6 +21,10 @@ const ITDashboard = () => {
   const [statusFilter, setStatusFilter] = useState<'all' | Status>('all');
   const [priorityFilter, setPriorityFilter] = useState<'all' | Priority>('all');
   const [search, setSearch] = useState('');
+
+  //Comments Modal
+  const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+  const [commentOpen, setCommentOpen] = useState(false);
 
   useEffect(() => {
     const checkAccess = async () => {
@@ -388,12 +393,29 @@ const ITDashboard = () => {
                   >
                     Resolve
                   </button>
+
+                  <button
+                    onClick={() => {
+                      setSelectedTicketId(ticket.id);
+                      setCommentOpen(true);
+                    }}
+                    className='flex-1 py-1.5 p-1 text-xs rounded-lg bg-white/10 text-gray-300 cursor-pointer'
+                  >
+                    Comments
+                  </button>
                 </div>
               </div>
             )
           })}
         </div>
       )}
+
+      <CommentModal 
+        ticketId={selectedTicketId || ''}
+        isOpen={commentOpen}
+        onClose={() => setCommentOpen(false)}
+        role='it'
+      />
     </div>
   )
 }

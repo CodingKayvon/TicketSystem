@@ -17,3 +17,13 @@ export interface Ticket {
   assignedToId: string | null;
   assignedToName: string | null;
 }
+
+export interface Comment {
+  id: string;
+  text: string;
+  createdAt: any; 
+  userId: string;
+  userName: string;
+  role: 'user' | 'it';
+  visibility: 'public' | 'internal';
+}
